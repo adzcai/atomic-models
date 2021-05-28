@@ -1,7 +1,6 @@
 import * as THREE from 'three';
-import data from './data';
 
-export default function getDaltonGroup() {
+export default function dalton() {
   const group = new THREE.Group();
 
   const ballRadius = 3;
@@ -24,5 +23,5 @@ export default function getDaltonGroup() {
   oxygen.position.set(0, oxygenRadius, 0);
   group.add(oxygen);
 
-  return { group, data: data.dalton };
+  return group;
 }

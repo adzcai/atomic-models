@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import * as TWEEN from '@tweenjs/tween.js';
-import data from './data';
 import { createElectrons } from '../util';
 
 export default function rutherford() {
@@ -29,7 +28,7 @@ export default function rutherford() {
 
   const obj = { time: 0 };
   new TWEEN.Tween(obj)
-    .to({ time: Math.PI * 2 })
+    .to({ time: Math.PI * 2 }, 2000)
     .onUpdate(({ time }) => {
       electrons.forEach((e) => {
         e.position
@@ -41,5 +40,5 @@ export default function rutherford() {
     .repeat(Infinity)
     .start();
 
-  return { group, data: data.rutherford };
+  return group;
 }

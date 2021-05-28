@@ -2,30 +2,31 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import * as TWEEN from '@tweenjs/tween.js';
 
-import { dalton, thompson, rutherford, millikan } from './slides';
+import slides from './slides';
 import './index.css';
 
-const GRAVITY = 9.81; // N / kg
+// global variables and state
+const SLIDE_W = 50;
 
-const data = [rutherford(), thompson(), dalton()];
-let currSlideIndex = 0;
+let cameraState = 'standard';
+
+let currSlideIndex = 4;
+
 function getCurrSlide() {
-  return data[currSlideIndex];
+  return slides[currSlideIndex];
 }
 
 function initSlide() {
-  scene.add(getCurrSlide().group);
+  const currSlide = getCurrSlide();
+  currSlide.group = currSlide.createGroup();
+  scene.add(currSlide.group);
   updateData();
-  if ('callback' in getCurrSlide()) {
-    getCurrSlide().callback();
+  if ('callback' in currSlide) {
+    currSlide.callback();
   }
   cameraState = 'standard';
   orbit.enabled = true;
 }
-
-const SLIDE_W = 50;
-
-let cameraState = 'standard';
 
 // initialize scene and camera
 const scene = new THREE.Scene();
@@ -53,7 +54,6 @@ const orbit = new OrbitControls(camera, renderer.domElement);
 orbit.enablePan = false;
 orbit.maxDistance = 50;
 orbit.minDistance = 10;
-// orbit.autoRotate = true;
 
 function coordsToObject(coords, from, to) {
   let x, y, z, radius, y_, theta;
@@ -86,38 +86,36 @@ function transitionSlide(dir) {
     'Vector3',
   );
   const to = { ...curr };
-  if (dir === 'right') to.x -= SLIDE_W;
-  else to.x += SLIDE_W;
+  let nextSlide;
+  if (dir === 'right') {
+    to.x -= SLIDE_W;
+    nextSlide = slides[currSlideIndex + 1];
+  } else {
+    to.x += SLIDE_W;
+    nextSlide = slides[currSlideIndex - 1];
+  }
+
+  nextSlide.group = nextSlide.createGroup();
+
+  if ('cleanup' in getCurrSlide()) {
+    getCurrSlide().cleanup();
+  }
 
   new TWEEN.Tween(curr)
     .to(to)
     .easing(TWEEN.Easing.Quadratic.InOut)
     .onUpdate(() => {
-      if (dir === 'right' && currSlideIndex < data.length - 1) {
-        data[currSlideIndex + 1].group.position.set(
-          curr.x + SLIDE_W,
-          curr.y,
-          curr.z,
-        );
+      if (dir === 'right' && currSlideIndex < slides.length - 1) {
+        nextSlide.group.position.set(curr.x + SLIDE_W, curr.y, curr.z);
       } else if (currSlideIndex > 0) {
-        data[currSlideIndex - 1].group.position.set(
-          curr.x - SLIDE_W,
-          curr.y,
-          curr.z,
-        );
+        nextSlide.group.position.set(curr.x - SLIDE_W, curr.y, curr.z);
       }
       getCurrSlide().group.position.set(curr.x, curr.y, curr.z);
     })
     .onComplete(() => {
       if (dir === 'right') currSlideIndex++;
       else currSlideIndex--;
-      scene.add(getCurrSlide().group);
-      updateData();
-      if ('callback' in data[currSlideIndex]) {
-        data[currSlideIndex].callback();
-      }
-      cameraState = 'standard';
-      orbit.enabled = true;
+      initSlide();
     })
     .start();
 }

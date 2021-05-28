@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 import * as TWEEN from '@tweenjs/tween.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
-import data from './data';
 import { createElectrons } from '../util';
 
 const batteryX = -7.8;
@@ -86,31 +85,29 @@ export default function getThompsonGroup() {
     .repeat(Infinity)
     .start();
 
-  function callback() {
-    document.querySelector('.controls').innerHTML = `
+  return group;
+}
+
+export function callback() {
+  document.querySelector('.controls').innerHTML = `
+    <div style="padding: 2rem">
       <label for="electric-field">Electric Field</label>
       <input type="checkbox" name="electric-field" id="electric-field" />
       <label for="magnetic-field">Magnetic Field</label>
       <input type="checkbox" name="magnetic-field" id="magnetic-field" />
-    `;
+    </div>
+  `;
 
-    document
-      .getElementById('electric-field')
-      .addEventListener('change', (e) => {
-        if (e.currentTarget.checked) currRayPath--;
-        else currRayPath++;
-      });
-    document
-      .getElementById('magnetic-field')
-      .addEventListener('change', (e) => {
-        if (e.currentTarget.checked) currRayPath++;
-        else currRayPath--;
-      });
-  }
+  document.getElementById('electric-field').addEventListener('change', (e) => {
+    if (e.currentTarget.checked) currRayPath--;
+    else currRayPath++;
+  });
+  document.getElementById('magnetic-field').addEventListener('change', (e) => {
+    if (e.currentTarget.checked) currRayPath++;
+    else currRayPath--;
+  });
+}
 
-  function cleanup() {
-    document.querySelector('.controls').innerHTML = '';
-  }
-
-  return { group, data: data.thompson, callback, cleanup };
+export function cleanup() {
+  document.querySelector('.controls').innerHTML = '';
 }
