@@ -1,0 +1,48 @@
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #cce0ff;
+  color: #000;
+}
+
+a {
+  color: #080;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+h1 {
+  margin-top: 0.5rem;
+}
+
+.container {
+  position: absolute;
+  width: 100%;
+  padding: 0.5rem;
+  top: 50%;
+  overflow-y: scroll;
+  max-height: 50%;
+}
+
+.info {
+  z-index: 100;
+  background-color: rgba(192, 192, 192, 0.5);
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  max-width: 100%;
+}
+
+@media screen and (min-width: 640px) {
+  .info {
+    padding: 1rem 2rem;
+    border-radius: 0.5rem;
+  }
+}
+
+.controls {
+  position: absolute;
+  width: max-content;
+  background-color: rgba(192, 192, 192, 0.5);
+}
