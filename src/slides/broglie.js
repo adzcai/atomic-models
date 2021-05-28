@@ -23,10 +23,11 @@ export default function broglie() {
     const nOrbs = n * 2 * nOrbsPerNode;
     return new Array(nOrbs).fill().map((_, j) => {
       const orb = new THREE.Mesh(
-        new THREE.SphereGeometry(0.2),
+        new THREE.BoxGeometry(0.8),
         new THREE.MeshLambertMaterial({ color: 0xff0000 }),
       );
       orb.position.setFromCylindricalCoords(r, (j * Math.PI * 2) / nOrbs, 4);
+      orb.rotateY((j * Math.PI * 2) / nOrbs);
       group.add(orb);
       orb.userData.base = Math.sin((j * Math.PI) / nOrbsPerNode);
       return orb;
@@ -39,7 +40,12 @@ export default function broglie() {
     .onUpdate(({ time }) => {
       energyLevels.forEach((orbs) => {
         orbs.forEach((orb) => {
-          orb.position.setY(4 + orb.userData.base * Math.sin(time));
+          orb.scale.setY(1 + orb.userData.base * Math.sin(time));
+          orb.material.color.setHSL(
+            0,
+            1,
+            0.5 + (orb.userData.base * Math.sin(time)) / 2,
+          );
         });
       });
     })
