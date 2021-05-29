@@ -14,7 +14,7 @@ function createPlumPudding() {
 
   const pudding = new THREE.Mesh(
     new THREE.SphereGeometry(rad),
-    new THREE.MeshBasicMaterial({
+    new THREE.MeshLambertMaterial({
       color: 0xff0000,
       side: THREE.BackSide,
       transparent: true,
@@ -139,9 +139,9 @@ export default function thomson() {
 
 export function callback() {
   document.getElementById('controls').innerHTML = `
-    <div style="padding: 2rem">
+    <div style="padding: 1rem">
       <label for="electric-field">Electric Field</label>
-      <input type="checkbox" name="electric-field" id="electric-field" />
+      <input type="checkbox" name="electric-field" id="electric-field" style="margin-right: 0.5rem" />
       <label for="magnetic-field">Magnetic Field</label>
       <input type="checkbox" name="magnetic-field" id="magnetic-field" />
     </div>

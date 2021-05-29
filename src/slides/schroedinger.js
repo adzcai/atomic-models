@@ -62,7 +62,7 @@ export default function schroedinger() {
       for (let theta = 0; theta < pi * 2; theta += pi / 8) {
         const ball = new THREE.Mesh(
           new THREE.SphereGeometry(0.2),
-          new THREE.MeshBasicMaterial({ color: 0x00ffff }),
+          new THREE.MeshLambertMaterial({ color: 0x00ffff }),
         );
         ball.position.setFromSphericalCoords(r, phi, theta).add(origin);
         state.group.add(ball);

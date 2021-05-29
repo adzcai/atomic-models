@@ -12,7 +12,7 @@ export default function rutherford() {
   nucleus.position.set(0, 4, 0);
   group.add(nucleus);
 
-  const electrons = createElectrons(7, 0.5);
+  const electrons = createElectrons(10, 0.5);
   electrons.forEach((e) => {
     group.add(e);
     e.userData.axis = new THREE.Vector3().setFromSphericalCoords(
