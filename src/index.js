@@ -1,16 +1,20 @@
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import * as TWEEN from '@tweenjs/tween.js';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 
 import slides from './slides';
 import './index.css';
 
 // global variables and state
 const SLIDE_W = 50;
-
 let cameraState = 'standard';
+let currSlideIndex = 0;
 
-let currSlideIndex = 4;
+const fields = {};
+['name', 'life', 'discovery_date', 'contribution', 'controls'].forEach(
+  (field) => (fields[field] = document.getElementById(field)),
+);
 
 function getCurrSlide() {
   return slides[currSlideIndex];
@@ -18,9 +22,18 @@ function getCurrSlide() {
 
 function initSlide() {
   const currSlide = getCurrSlide();
-  currSlide.group = currSlide.createGroup();
+  initGroup(currSlide);
+
   scene.add(currSlide.group);
-  updateData();
+
+  const data = getCurrSlide().data;
+  fields.name.innerHTML = data.name;
+  fields.life.innerHTML = data.birth + '–' + data.death;
+  fields.discovery_date.innerHTML = data.discovery_date;
+  fields.contribution.innerHTML = data.contribution
+    .map((contribution) => `<li>${contribution}</li>`)
+    .join('');
+
   if ('callback' in currSlide) {
     currSlide.callback();
   }
@@ -55,6 +68,23 @@ orbit.enablePan = false;
 orbit.maxDistance = 50;
 orbit.minDistance = 10;
 
+let textNone = null;
+new GLTFLoader().load('/assets/none.glb', (gltf) => {
+  gltf.scene.scale.setScalar(0.2);
+  textNone = gltf.scene;
+});
+
+function initGroup(slide) {
+  if (!('group' in slide)) {
+    if ('createGroup' in slide) {
+      slide.group = slide.createGroup();
+    } else {
+      slide.group = textNone.clone();
+      console.log('CREATE TEXT NONE', slide.group);
+    }
+  }
+}
+
 function coordsToObject(coords, from, to) {
   let x, y, z, radius, y_, theta;
 
@@ -71,11 +101,6 @@ function coordsToObject(coords, from, to) {
   } else if (to === 'Cylindrical') {
     return { radius, y: y_, theta };
   }
-}
-
-function listify(coords) {
-  if ('x' in coords) return [coords.x, coords.y, coords.z];
-  else return [coords.radius, coords.theta, coords.y];
 }
 
 function transitionSlide(dir) {
@@ -95,21 +120,19 @@ function transitionSlide(dir) {
     nextSlide = slides[currSlideIndex - 1];
   }
 
-  nextSlide.group = nextSlide.createGroup();
-
-  if ('cleanup' in getCurrSlide()) {
-    getCurrSlide().cleanup();
-  }
+  if ('cleanup' in getCurrSlide()) getCurrSlide().cleanup();
+  fields.controls.innerHTML = '';
+  initGroup(nextSlide);
 
   new TWEEN.Tween(curr)
     .to(to)
     .easing(TWEEN.Easing.Quadratic.InOut)
     .onUpdate(() => {
-      if (dir === 'right' && currSlideIndex < slides.length - 1) {
-        nextSlide.group.position.set(curr.x + SLIDE_W, curr.y, curr.z);
-      } else if (currSlideIndex > 0) {
-        nextSlide.group.position.set(curr.x - SLIDE_W, curr.y, curr.z);
-      }
+      nextSlide.group.position.set(
+        curr.x + dir === 'right' ? SLIDE_W : -SLIDE_W,
+        curr.y,
+        curr.z,
+      );
       getCurrSlide().group.position.set(curr.x, curr.y, curr.z);
     })
     .onComplete(() => {
@@ -130,7 +153,11 @@ function updatePhysics(delta) {
 
       if (
         camera.position.distanceTo(
-          new THREE.Vector3().setFromCylindricalCoords(...listify(ogCamPos)),
+          new THREE.Vector3().setFromCylindricalCoords(
+            ogCamPos.radius,
+            ogCamPos.theta,
+            ogCamPos.y,
+          ),
         ) < 0.1
       ) {
         transitionSlide(cameraState);
@@ -140,7 +167,11 @@ function updatePhysics(delta) {
           .to(ogCamPos)
           .easing(TWEEN.Easing.Quadratic.InOut)
           .onUpdate(() => {
-            camera.position.setFromCylindricalCoords(...listify(coords));
+            camera.position.setFromCylindricalCoords(
+              coords.radius,
+              coords.theta,
+              coords.y,
+            );
             camera.lookAt(0, 5, 0);
           })
           .onComplete(() => {
@@ -170,16 +201,6 @@ scene.add(spotlight);
 
 scene.add(new THREE.AmbientLight(0xffffff, 0.5));
 
-function updateData() {
-  const data = getCurrSlide().data;
-  document.getElementById('name').innerHTML = data.name;
-  document.getElementById('life').innerHTML = data.birth + '–' + data.death;
-  document.getElementById('discovery_date').innerHTML = data.discovery_date;
-  document.getElementById('contribution').innerHTML = data.contribution
-    .map((contribution) => `<li>${contribution}</li>`)
-    .join('');
-}
-
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
@@ -187,9 +208,9 @@ window.addEventListener('resize', () => {
 });
 
 document.addEventListener('keyup', (ev) => {
-  if (ev.key === 'ArrowRight') {
+  if (ev.key === 'ArrowRight' && currSlideIndex < slides.length - 1) {
     cameraState = 'right';
-  } else if (ev.key === 'ArrowLeft') {
+  } else if (ev.key === 'ArrowLeft' && currSlideIndex > 0) {
     cameraState = 'left';
   }
 });

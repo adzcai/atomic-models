@@ -6,6 +6,53 @@ import { createElectrons } from '../util';
 const batteryX = -7.8;
 const midY = 4.5;
 const midX = 7;
+let currRayPath = 1;
+
+function createPlumPudding() {
+  const group = new THREE.Group();
+  const rad = 4;
+
+  const pudding = new THREE.Mesh(
+    new THREE.SphereGeometry(rad),
+    new THREE.MeshBasicMaterial({
+      color: 0xff0000,
+      side: THREE.BackSide,
+      transparent: true,
+    }),
+  );
+  group.add(pudding);
+
+  const electrons = createElectrons(10, 0.5);
+  electrons.forEach((e) => {
+    e.position.setFromSphericalCoords(
+      Math.random() * (rad - 1) + 1,
+      Math.random() * Math.PI,
+      Math.random() * Math.PI * 2,
+    );
+    group.add(e);
+  });
+
+  const t = { time: 0 };
+  new TWEEN.Tween(t)
+    .to({ time: 1 }, 50)
+    .repeat(Infinity)
+    .onRepeat(() => {
+      electrons.forEach((e) => {
+        e.position.add(
+          new THREE.Vector3(
+            Math.random() - 0.5,
+            Math.random() - 0.5,
+            Math.random() - 0.5,
+          ).setLength(0.1),
+        );
+        if (e.position.distanceTo(pudding.position) > rad)
+          e.position.copy(pudding.position);
+      });
+    })
+    .start();
+
+  return group;
+}
 
 function createRayPaths() {
   const highPath = new THREE.CatmullRomCurve3([
@@ -28,10 +75,10 @@ function createRayPaths() {
   return [highPath, midPath, lowPath];
 }
 
-export default function getThompsonGroup() {
+export default function thomson() {
   const group = new THREE.Group();
 
-  new GLTFLoader().load('/assets/thompson/thompson.glb', (gltf) => {
+  new GLTFLoader().load('/assets/thomson.glb', (gltf) => {
     gltf.scene.scale.set(0.2, 0.2, 0.2);
     gltf.scene.position.set(2, 0, -0.2);
     group.add(gltf.scene);
@@ -66,8 +113,6 @@ export default function getThompsonGroup() {
   group.add(...cathodeRay);
 
   const rayPaths = createRayPaths();
-  let currRayPath = 1;
-
   const tween = { time: 0 };
   new TWEEN.Tween(tween)
     .onUpdate(({ time }) => {
@@ -85,11 +130,15 @@ export default function getThompsonGroup() {
     .repeat(Infinity)
     .start();
 
+  const pudding = createPlumPudding();
+  pudding.position.setY(15);
+  group.add(pudding);
+
   return group;
 }
 
 export function callback() {
-  document.querySelector('.controls').innerHTML = `
+  document.getElementById('controls').innerHTML = `
     <div style="padding: 2rem">
       <label for="electric-field">Electric Field</label>
       <input type="checkbox" name="electric-field" id="electric-field" />
@@ -106,8 +155,4 @@ export function callback() {
     if (e.currentTarget.checked) currRayPath++;
     else currRayPath--;
   });
-}
-
-export function cleanup() {
-  document.querySelector('.controls').innerHTML = '';
 }

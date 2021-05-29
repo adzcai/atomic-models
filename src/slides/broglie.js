@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import * as TWEEN from '@tweenjs/tween.js';
 
-import { planck, me, c } from '../util';
+import { getR } from '../util';
 
 export default function broglie() {
   const group = new THREE.Group();
@@ -16,18 +16,20 @@ export default function broglie() {
   // n * wavelen = 2*pi*r
   const nOrbsPerNode = 6;
 
-  const energyLevels = new Array(5).fill().map((_, i) => {
+  const nEnergyLevels = 5;
+  const energyLevels = new Array(nEnergyLevels).fill().map((_, i) => {
     const n = i + 1;
-    const r = ((n * planck) / (me * c * 2 * Math.PI)) * 1e12 * 3;
-
+    const r = getR(n);
     const nOrbs = n * 2 * nOrbsPerNode;
     return new Array(nOrbs).fill().map((_, j) => {
       const orb = new THREE.Mesh(
-        new THREE.BoxGeometry(0.8),
-        new THREE.MeshLambertMaterial({ color: 0xff0000 }),
+        new THREE.CylinderGeometry(0.3, 0.3, 0.6),
+        new THREE.MeshLambertMaterial({
+          color: new THREE.Color().setHSL(i / nEnergyLevels, 1, 0.5),
+        }),
       );
       orb.position.setFromCylindricalCoords(r, (j * Math.PI * 2) / nOrbs, 4);
-      orb.rotateY((j * Math.PI * 2) / nOrbs);
+      orb.rotation.set(Math.PI / 2, 0, Math.PI / 2 - (j * Math.PI * 2) / nOrbs);
       group.add(orb);
       orb.userData.base = Math.sin((j * Math.PI) / nOrbsPerNode);
       return orb;
@@ -38,14 +40,9 @@ export default function broglie() {
   new TWEEN.Tween(tween)
     .to({ time: Math.PI * 2 }, 750)
     .onUpdate(({ time }) => {
-      energyLevels.forEach((orbs) => {
+      energyLevels.forEach((orbs, i) => {
         orbs.forEach((orb) => {
-          orb.scale.setY(1 + orb.userData.base * Math.sin(time));
-          orb.material.color.setHSL(
-            0,
-            1,
-            0.5 + (orb.userData.base * Math.sin(time)) / 2,
-          );
+          orb.position.setY(4 + orb.userData.base * Math.sin(time));
         });
       });
     })
